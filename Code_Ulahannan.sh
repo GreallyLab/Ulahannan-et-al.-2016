@@ -2,7 +2,7 @@
 #read in htseq count table
 read.table("table",sep="\t",header=T)->exp
 exp[,c(2:7)]->hff2
-#DEseq Bioconductor Package
+#DEseq Bioconductor Package used to obtain differentially expressed genes and normalized gene counts
 library("DESeq")
 conds <- factor( c( "I1" ,"I2", "I3", "U1", "U2", "U3" ) )
 cds <- newCountDataSet( table, conds )
@@ -13,9 +13,9 @@ cds <- estimateDispersions( cds )
 res <- nbinomTest( cds, "table1", "table2" )
 
 #HELP-tagging/HELP-GT - #R code
-#read in mspI count table
+#read in reference mspI count table
 read.table("MspRef.txt",header=T)->msp
-#read in hpaII hg19 annotations table
+#read in hpaII hg19 annotation table
 read.table("anno_hpaii_hg19.txt",skip=1)->hpaii
 #read in hpaII count table
 read.table("hg19.BGT_U1_HFF.AC263LACXX.lane_7.hcount",skip=1)->U
@@ -118,8 +118,9 @@ return(list(mainobs, simulations))}
 
 result1<-bed_boot(bed1=bed1, bed2=bed2, bed3=bed3)
 
+
 #ATAC-seq Analysis - #bash script
-#alignment to combined genome
+#alignment to combined genome (hg19 + Toxoplasma genomes)
 qsub bwa mem -p data_from_oxford/Genomes/TgME49_9.0+hg19.fasta data_from_oxford/Human_ATAC/I1_ATAC.fq.gz
 samtools view -Sb I1_ATAC_hg19TgME49v9.sam  >  I1_ATAC_hg19TgME49v9.bam
 #remove PCR duplicates
@@ -131,10 +132,17 @@ samtools index I2_ATAC_NoDupSort_reheader.bam
 #differentiate between reads aligning to the human and t.gondii genomes
 samtools view -b I2_ATAC_NoDupSort_reheader.bam chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY | samtools sort - I2_ATAC_NoDupSort-chrM
 samtools view -b I1sort_ATAC_hg19TgME49v9_NoDup.bam TGME49_chrIa TGME49_chrIb TGME49_chrII TGME49_chrIII TGME49_chrIV TGME49_chrV TGME49_chrVI TGME49_chrVIIa TGME49_chrVIIb TGME49_chrVIII TGME49_chrIX TGME49_chrX TGME49_chrXI TGME49_chrXII  | samtools sort - I1_ATACtoxo_hg19TgME49v9
-#call peaks
+#call peaks using Macs2 
 macs2 callpeak -t /oxford/nulahannan/I1_ATACtoxo_hg19TgME49v9.bam -f BAM -g 7e7 -n I1toxomacs -B -q 0.05 --nomodel --nolambda
 macs2 callpeak -t /oxford/nulahannan/I1_ATAChuman_hg19TgME49v9_-chrM.bam -f BAM -g hs -n I1human_macs -B -q 0.05 --nomodel --nolambda
 bamToBed -i I1_ATAChuman_hg19TgME49v9_-chrM.bam > I1_ATAChuman_hg19TgME49v9.bed
+
+## Versions of software used in unix environment
+module list
+Currently Loaded Modulefiles:
+  1) samtools/1.2/gcc.4.4.7            4) numpy/1.9.0/python.2.7.8
+  2) bwa/0.7.13/gcc.4.4.7              5) MACS2/2.1.0-update/python.2.7.8
+  3) python/2.7.8/gcc.4.4.7			   6) bedtools2/2.24.0/gcc.4.4.7
 
 
 
